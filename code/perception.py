@@ -109,6 +109,8 @@ def perception_step(Rover):
     perspective_mask = perspect_transform(np.ones_like(Rover.img[:,:,0]), source, destination) 
     distance_mask = (np.ones_like(Rover.img[:,:,0]))
     distance_mask[:10,:] = 0
+    distance_mask[:,:20] = 0
+    distance_mask[:,-20:] = 0
     
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     navigable = color_thresh(warped, rgb_thresh=(160, 160, 160)) * distance_mask
