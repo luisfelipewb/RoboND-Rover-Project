@@ -165,5 +165,10 @@ def perception_step(Rover):
         # Rover.nav_angles = rover_centric_angles
     Rover.nav_dists = rover_centric_pixel_distances
     Rover.nav_angles = rover_centric_angles
+    #Rover.samples_pos = (np.mean(rock_x_world), np.mean(rock_y_world))
+    rover_centric_sample_distances, rover_centric_sample_angles = to_polar_coords(roc_xpix, roc_ypix)
+    Rover.sample_dists = rover_centric_sample_distances
+    Rover.sample_angles = rover_centric_sample_angles
+
     
     return Rover
