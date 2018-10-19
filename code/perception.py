@@ -25,7 +25,7 @@ def find_rocks(img, rgb_thresh=(110, 110, 50)):
                 & (img[:,:,1] > rgb_thresh[1]) \
                 & (img[:,:,2] < rgb_thresh[2])
     color_select[above_thresh] = 1
-    return color_select 
+    return color_select
 
 # Define a function to convert from image coords to rover coords
 def rover_coords(binary_img):
@@ -53,12 +53,11 @@ def rotate_pix(xpix, ypix, yaw):
     # Convert yaw to radians
     yaw_rad = yaw * np.pi / 180
     xpix_rotated = (xpix * np.cos(yaw_rad)) - (ypix * np.sin(yaw_rad))
-                            
     ypix_rotated = (xpix * np.sin(yaw_rad)) + (ypix * np.cos(yaw_rad))
     # Return the result  
     return xpix_rotated, ypix_rotated
 
-def translate_pix(xpix_rot, ypix_rot, xpos, ypos, scale): 
+def translate_pix(xpix_rot, ypix_rot, xpos, ypos, scale):
     # Apply a scaling and a translation
     xpix_translated = (xpix_rot / scale) + xpos
     ypix_translated = (ypix_rot / scale) + ypos
@@ -81,10 +80,8 @@ def pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale):
 
 # Define a function to perform a perspective transform
 def perspect_transform(img, src, dst):
-           
     M = cv2.getPerspectiveTransform(src, dst)
     warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image
-    
     return warped
 
 
@@ -105,13 +102,13 @@ def perception_step(Rover):
                       ])
 
     # 2) Apply perspective transform
-    warped = perspect_transform(Rover.img, source, destination) 
-    perspective_mask = perspect_transform(np.ones_like(Rover.img[:,:,0]), source, destination) 
+    warped = perspect_transform(Rover.img, source, destination)
+    perspective_mask = perspect_transform(np.ones_like(Rover.img[:,:,0]), source, destination)
     distance_mask = (np.ones_like(Rover.img[:,:,0]))
     distance_mask[:10,:] = 0
     distance_mask[:,:20] = 0
     distance_mask[:,-20:] = 0
-    
+
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
     navigable = color_thresh(warped, rgb_thresh=(160, 160, 160)) * distance_mask
     obstacles = np.absolute(np.float32(navigable) -1) * perspective_mask * distance_mask
@@ -170,5 +167,5 @@ def perception_step(Rover):
     Rover.sample_dists = rover_centric_sample_distances
     Rover.sample_angles = rover_centric_sample_angles
 
-    
+
     return Rover
