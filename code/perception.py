@@ -4,20 +4,8 @@ import cv2
 scale = 10
 
 # Identify pixels above the threshold
-def color_thresh(img, rgb_thresh=(160, 160, 160)):
-    color_select = np.zeros_like(img[:,:,0])
-    above_thresh = (img[:,:,0] > rgb_thresh[0]) \
-                & (img[:,:,1] > rgb_thresh[1]) \
-                & (img[:,:,2] > rgb_thresh[2])
-    color_select[above_thresh] = 1
-    return color_select
-
-def find_rocks(img, rgb_thresh=(110, 110, 50)):
-    color_select = np.zeros_like(img[:,:,0])
-    above_thresh = (img[:,:,0] > rgb_thresh[0]) \
-                & (img[:,:,1] > rgb_thresh[1]) \
-                & (img[:,:,2] < rgb_thresh[2])
-    color_select[above_thresh] = 1
+def color_thresh(img, rgb_lower_thresh=(160, 160, 160), rgb_upper_thresh=(255,255,255)):
+    color_select = cv2.inRange(img, rgb_lower_thresh, rgb_upper_thresh)
     return color_select
 
 # Define a function to convert from image coords to rover coords
@@ -26,7 +14,6 @@ def rover_coords(binary_img):
     x_pixel = -(ypos - binary_img.shape[0]).astype(np.float)
     y_pixel = -(xpos - binary_img.shape[1]/2 ).astype(np.float)
     return x_pixel, y_pixel
-
 
 # Define a function to convert to radial coords in rover space
 def to_polar_coords(x_pixel, y_pixel):
@@ -47,7 +34,6 @@ def translate_pix(xpix_rot, ypix_rot, xpos, ypos, scale):
     ypix_translated = (ypix_rot / scale) + ypos
     return xpix_translated, ypix_translated
 
-
 # Define a function to apply rotation and translation (and clipping)
 def pix_to_world(xpix, ypix, xpos, ypos, yaw, world_size, scale):
     xpix_rot, ypix_rot = rotate_pix(xpix, ypix, yaw)
@@ -61,7 +47,6 @@ def perspect_transform(img, src, dst):
     M = cv2.getPerspectiveTransform(src, dst)
     warped = cv2.warpPerspective(img, M, (img.shape[1], img.shape[0]))# keep same size as input image
     return warped
-
 
 # Apply the above functions in succession and update the Rover state accordingly
 def perception_step(Rover):
@@ -78,22 +63,21 @@ def perception_step(Rover):
 
     # 2) Apply perspective transform
     warped = perspect_transform(Rover.img, source, destination)
-    perspective_mask = perspect_transform(np.ones_like(Rover.img[:,:,0]), source, destination)
-    distance_mask = (np.ones_like(Rover.img[:,:,0]))
-    distance_mask[:10,:] = 0
-    distance_mask[:,:20] = 0
-    distance_mask[:,-20:] = 0
+    fov_mask = perspect_transform(np.ones_like(Rover.img[:,:,0]), source, destination)
+    # TODO: Improve FOV    
+    fov_mask[:10,:] = 0
+    fov_mask[:,:20] = 0
+    fov_mask[:,-20:] = 0
 
     # 3) Apply color threshold to identify navigable terrain/obstacles/rock samples
-    navigable = color_thresh(warped, rgb_thresh=(160, 160, 160)) * distance_mask
-    obstacles = np.absolute(np.float32(navigable) -1) * perspective_mask * distance_mask
-    rock_sample = find_rocks(warped, rgb_thresh=(110,110,50))
-
+    navigable = color_thresh(warped, rgb_lower_thresh=(160,160,160), rgb_upper_thresh=(255,255,255)) * fov_mask
+    obstacles = color_thresh(warped, rgb_lower_thresh=(0,0,0), rgb_upper_thresh=(160,160,160)) * fov_mask
+    rock_sample = color_thresh(warped, rgb_lower_thresh=(100,100,0), rgb_upper_thresh=(255,255,0)) * fov_mask
 
     # 4) Update Rover.vision_image (this will be displayed on left side of screen)
-    Rover.vision_image[:,:,0] = obstacles * 255
-    Rover.vision_image[:,:,1] = rock_sample * 255
-    Rover.vision_image[:,:,2] = navigable * 255
+    Rover.vision_image[:,:,0] = obstacles
+    Rover.vision_image[:,:,1] = rock_sample
+    Rover.vision_image[:,:,2] = navigable
 
     # 5) Convert map image pixel values to rover-centric coords
     obs_xpix, obs_ypix = rover_coords(obstacles)
