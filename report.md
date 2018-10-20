@@ -1,7 +1,7 @@
 [//]: # (Image References)
 [image1]: ./output/filters.png
 [image2]: ./output/video_screenshot.png
-[image3]: ./calibration_images/example_rock1.jpg 
+[image3]: ./output/autonomous.png 
 
 # Project Report: Search and Sample Return
 
@@ -78,15 +78,25 @@ Since playing with the simulator is much more fun than with the Jupyter Notebook
 
 #### `perception_step()` function considerations
 
-(...)
+
+The `perception_step()` function is very similar to the `process_image()` function described above. In order to improve fidelity results, some restrictions and improvements were made. 
+
+First, when the rover was not stable, the reading was discarded. To do that, the Rover.worldmap was only updated when the pitch and roll were within aceptable limits. 
+ 
+Additionally, locations that were far from the rover are more sensitve even for small movements. For this reason, pixels from the edge of the image were discarded, usine the `fov_mask` to crop the readings.
+
+Finally, the last diference is that the `perception_step()` function updates variables that will be used by the decision phase, such as the `Rover.nav_dists` and `Rover.nav_angles`.
+
 
 #### `decision_step()` function considerations
 
-(...)
+The `decision_step()` function relies on the data provided by the perception step. 
+
+The steering angle is calculated as an average of the navigalbe angles. This aproach sometimes make the rover drive straight into a obstacle if the navigable terrain is simetrical on both sides. 
+
+Several improvements are possible and are being made. Nonetheless current implementation can make the rover drive in autonomous mode.  
 
 ### 2. Launching in autonomous mode your rover can navigate and map autonomously.  Explain your results and how you might improve them in your writeup.  
-
-**Note: running the simulator with different choices of resolution and graphics quality may produce different results, particularly on different machines!  Make a note of your simulator settings (resolution and graphics quality set on launch) and frames per second (FPS output to terminal by `drive_rover.py`) in your writeup when you submit the project so your reviewer can reproduce your results.**
 
 #### Simulator Settings
 |Setting   | Value       |
@@ -96,18 +106,24 @@ Since playing with the simulator is much more fun than with the Jupyter Notebook
 |FPS       | Aprox 10    |
 
 #### Results
+In most of the times, the rover can map more than 40% of the map with fidelity higher than 60%.
+
 ![alt text][image3]
 
 #### Possible Improvements
+1. Perception Improve color
 
+- Refine color thresholds using HSV instead of RGB 
+- Limit the FOV using polar coords
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+2. Decision
+
+- Consider only close pixels in order to make navigation decision
+- Keep track of visited terrain 
+- Improve state machine to collect samples and get out from stuck situations.
+- Aproach the rock samples efficiently
 
 ### Conclusions
-
-
-
-
-
+Curent version of the implementation, already achieves the minimal results necessary. Further improvements will be done continuously within the time lime. 
 
 
