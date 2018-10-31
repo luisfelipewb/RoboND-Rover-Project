@@ -124,6 +124,6 @@ In most of the times, the rover can map more than 40% of the map with fidelity h
 - Aproach the rock samples efficiently
 
 ### Conclusions
-Curent version of the implementation, already achieves the minimal results necessary. Further improvements will be done continuously within the time lime. 
+Curent version of the implementation, already achieves the minimal results necessary. Further improvements will be done continuously within the time limit. 
 
 
